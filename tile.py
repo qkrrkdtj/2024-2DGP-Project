@@ -22,6 +22,7 @@ class Tile:
             self.image = load_image('turret_support.png')
         elif tile_type == 'C':
             self.image = load_image('castle.png')
+
         elif tile_type == '#':
             self.image = None  # 벽이나 장애물은 이미지를 없앰
         else:
@@ -59,6 +60,8 @@ class Stage:
         self.load_stage_map(file_path)
         self.menu_manager = MenuManager()  # MenuManager 인스턴스 생성
         self.health = 10
+        self.path = []
+
 
     def load_stage_map(self, file_path):
         map_data = []
@@ -169,7 +172,6 @@ class Stage:
         else:
             print(f"Not enough gold to build {tower_type} tower.")
             return False
-
 
 
 class MenuManager:
@@ -418,4 +420,6 @@ class MenuManager:
         draw_rectangle(sell_button_x - button_size // 2, sell_button_y - button_size // 2,
                        sell_button_x + button_size // 2, sell_button_y + button_size // 2)
         draw_text("Sell", sell_button_x, sell_button_y - 70)
+
+
 

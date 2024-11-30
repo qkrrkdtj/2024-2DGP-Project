@@ -1,5 +1,7 @@
 from os import remove
 
+from enemy import Enemy
+
 world = [[] for _ in range(4)]
 
 def add_object(o, depth = 0):
@@ -20,6 +22,8 @@ def update():
     for layer in world:
         for o in layer:
             o.update()
+            if isinstance(o, Enemy) and not o.alive:
+                remove_object(o)
 
 
 def render():
