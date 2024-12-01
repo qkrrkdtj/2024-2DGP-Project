@@ -1,5 +1,6 @@
 from pico2d import *
 import game_framework
+import game_world
 from game_scene import draw_text
 from tower import Tower
 
@@ -59,7 +60,7 @@ class Stage:
         self.towers = []
         self.load_stage_map(file_path)
         self.menu_manager = MenuManager()  # MenuManager 인스턴스 생성
-        self.health = 10
+        self.health = game_framework.player_health
         self.path = []
 
 
@@ -141,33 +142,17 @@ class Stage:
         # 타워 그리기
         for tower in self.towers:
             tower.draw()
-        # 골드 및 체력 표시
-        self.draw_ui()
-
-    def draw_ui(self):
-        # 체력 및 골드 아이콘 및 텍스트 그리기
-        health_image = load_image('life.png')
-        gold_image = load_image('money.png')
-
-        # 체력 표시
-        health_image.draw(50, 550, 40, 40)
-        draw_text(f"HP: {self.health}", 90, 550, (255,255,255))
-
-        # 골드 표시
-        gold_image.draw(50, 500, 40, 40)
-        draw_text(f"Gold: {self.menu_manager.gold}", 90, 500, (255,255,255))
 
     def update(self):
-        for tower in self.towers:
-            tower.update()
+        pass
 
     def add_tower(self, x, y, tower_type):
         cost = self.menu_manager.tower_info[tower_type]['cost']  # 비용 확인
-        if self.menu_manager.gold >= cost:
-            self.menu_manager.gold -= cost
+        if game_framework.deduct_gold(cost):  # 중앙 관리에서 골드 차감
             new_tower = Tower(x, y, tower_type)
             self.towers.append(new_tower)  # 타워 리스트에 추가
-            print(f"Tower of type '{tower_type}' added at ({x}, {y}). Remaining gold: {self.menu_manager.gold}")
+            print(f"Tower of type '{tower_type}' added at ({x}, {y}). Remaining gold: {game_framework.player_gold}")
+            game_world.add_object(new_tower, 1)
             return True
         else:
             print(f"Not enough gold to build {tower_type} tower.")
@@ -181,7 +166,7 @@ class MenuManager:
         self.current_menu_type = None  # 'build' 또는 'upgrade'
         self.selected_position = None  # (x, y) 좌표
         self.selected_tower = None
-        self.gold = 1000  # 초기 골드
+        self.gold = game_framework.player_gold
         self.load_images()
         self.setup_tower_info()
 

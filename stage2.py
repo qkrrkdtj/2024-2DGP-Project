@@ -30,11 +30,10 @@ def handle_events():
 def init():
     global running, tower, stage, background, spawner, boss_button, boss_spawned
     global path
-    path = [(200, 375), (250, 375), (300, 375), (350, 375), (350, 325), (350, 275), (400, 275), (450, 275), (500, 275)]
-
+    path = [(150,275), (200, 275), (250, 275), (250, 325), (300, 325), (350, 325), (400, 325), (450, 325), (450, 275), (500, 275), (550, 275)]
     running = True
     background = load_image('black.png')
-    stage = Stage('map1')
+    stage = Stage('map2')
     spawner = Spawner(path)  # 스포너 초기화
     boss_button = load_image('wave_button2.png')  # 보스 버튼 이미지 로드
     boss_spawned = False  # 보스가 생성되었는지 여부

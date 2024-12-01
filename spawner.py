@@ -71,7 +71,7 @@ class Spawner:
 
         # 적 유형별 기본 체력과 속도
         enemy_type = self.current_sequence['enemy_type']
-        base_health = {'Basic': 5, 'Tough': 10, 'Fast': 3}[enemy_type]
+        base_health = {'Basic': 40, 'Tough': 10, 'Fast': 3}[enemy_type]
         speed = {'Basic': 10, 'Tough': 5, 'Fast': 20}[enemy_type]
 
         # 라운드에 따른 체력 증가
