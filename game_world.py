@@ -1,3 +1,4 @@
+from pico2d import load_font
 
 world = [[] for _ in range(4)]
 collision_pairs = {}
@@ -52,7 +53,6 @@ def collide(a, b):
 
 def add_collision_pair(group, a, b):
     if group not in collision_pairs:
-        print(f'Added new group {group}')
         collision_pairs[group] = [ [], [] ]
     if a:
         collision_pairs[group][0].append(a)
@@ -65,9 +65,12 @@ def handle_collisions():
         for a in pairs[0]:
             for b in pairs[1]:
                 if collide(a, b):
-                    print(f"Collision detected between {a} and {b}")  # 디버깅 메시지
                     a.handle_collision(group, b)
                     b.handle_collision(group, a)
 
 def get_enemies():
     return [obj for layer in world for obj in layer if hasattr(obj, 'alive') and hasattr(obj, 'x') and hasattr(obj, 'y')]
+
+def draw_text(text, x, y, color=(0, 0, 0)):
+    font = load_font('ARIAL.TTF', 30)
+    font.draw(x, y, text, color)

@@ -1,7 +1,7 @@
 from pico2d import *
 import game_framework
 import game_world
-from game_scene import draw_text
+from game_world import draw_text
 from tower import Tower
 
 
@@ -35,14 +35,6 @@ class Tile:
         if self.image:  # 공통적으로 이미지를 그리기
             self.image.draw(self.x, self.y, Tile.tile_size, Tile.tile_size)
 
-        if self.tile_type == 'O':
-            draw_rectangle(
-                self.x - Tile.tile_size // 2,
-                self.y - Tile.tile_size // 2,
-                self.x + Tile.tile_size // 2,
-                self.y + Tile.tile_size // 2
-            )
-
     def get_bounds(self):
         # 타일의 경계 좌표를 반환합니다.
         return (
@@ -62,6 +54,7 @@ class Stage:
         self.menu_manager = MenuManager()  # MenuManager 인스턴스 생성
         self.health = game_framework.player_health
         self.path = []
+
 
 
     def load_stage_map(self, file_path):
@@ -97,7 +90,6 @@ class Stage:
                     tile_y = start_y + ((height - y - 1) * Tile.tile_size) + Tile.tile_size // 2
                     tile = Tile(tile_x, tile_y, tile_type)
                     self.tiles.append(tile)
-                    print(f"Created tile: type={tile_type}, x={tile_x}, y={tile_y}")
 
     def handle_events(self):
         events = get_events()
@@ -111,7 +103,6 @@ class Stage:
                     game_framework.quit()
             elif event.type == SDL_MOUSEBUTTONDOWN:
                 mouse_x, mouse_y = event.x, 600 - event.y  # y좌표 변환
-                print(f"Mouse clicked at: ({mouse_x}, {mouse_y})")
 
                 if self.menu_manager.menu_visible:
                     self.menu_manager.handle_click(mouse_x, mouse_y, self)
@@ -166,9 +157,14 @@ class MenuManager:
         self.current_menu_type = None  # 'build' 또는 'upgrade'
         self.selected_position = None  # (x, y) 좌표
         self.selected_tower = None
-        self.gold = game_framework.player_gold
         self.load_images()
         self.setup_tower_info()
+        self.build_sound = load_wav('build.wav')
+        self.build_sound.set_volume(32)
+        self.sell_sound = load_wav('sell.wav')
+        self.sell_sound.set_volume(32)
+        self.upgrade_sound = load_wav('upgrade.wav')
+        self.upgrade_sound.set_volume(32)
 
     def load_images(self):
         global slide, slide_back, menu_background, tower_icons
@@ -181,7 +177,6 @@ class MenuManager:
             'Normal': load_image('turret1_select.png'),
             'Sniper': load_image('turret2_select.png'),
             'Triple': load_image('turret3_select.png'),
-            'Slow': load_image('turret4_select.png')
         }
 
     def setup_tower_info(self):
@@ -201,11 +196,7 @@ class MenuManager:
                 'description': 'Multi Target Tower\nDamage: 8\nRange: 120',
                 'stats': {'damage': 8, 'range': 120, 'attack_speed': 0.8}
             },
-            'Slow': {
-                'cost': 120,
-                'description': 'Slow Effect Tower\nSlow: 50%\nRange: 100',
-                'stats': {'slow': 0.5, 'range': 100, 'attack_speed': 1.0}
-            }
+
         }
 
     def show_tower_build_menu(self, x, y):
@@ -249,7 +240,6 @@ class MenuManager:
             'Normal': (560, 450),
             'Sniper': (720, 450),
             'Triple': (560, 150),
-            'Slow': (720, 150),
         }
 
         for tower_type, button_pos in buttons.items():
@@ -262,7 +252,7 @@ class MenuManager:
 
 
     def can_buy_tower(self, tower_type):
-        return self.gold >= self.tower_info[tower_type]['cost']
+        return game_framework.player_gold >= self.tower_info[tower_type]['cost']
 
     def build_tower(self, stage, tower_type):
         if self.selected_position:
@@ -270,6 +260,7 @@ class MenuManager:
             if stage.add_tower(x, y, tower_type):  # Stage에 설치 요청
                 print(f"{tower_type} tower successfully built!")
                 self.hide_menu()  # 메뉴 닫기
+                self.build_sound.play()
                 return True
         else:
             print("No position selected for tower placement.")
@@ -297,11 +288,9 @@ class MenuManager:
     def draw_menu_overlay(self):
 
         self.draw_menu_image(menu_background, 400, 0, 800, 600)
-        draw_rectangle(480, 0, 800, 600)
 
         self.draw_menu_image(slide_back, 410, 15, 470, 95)
         self.draw_menu_image(slide, 410, 20, 470, 100)
-        draw_rectangle(410, 20, 470, 100)
 
     def draw_build_menu(self):
         button_size = 100
@@ -311,23 +300,14 @@ class MenuManager:
             'Normal': 1,
             'Sniper': 2,
             'Triple': 3,
-            'Slow': 4
         }
 
-        button_x = [560, 720, 560, 720]
-        button_y = [450, 450, 150, 150]
+        button_x = [560, 720, 560]
+        button_y = [450, 450, 150]
 
         for tower, i in towers.items():
             # 아이콘 그리기
             tower_icons[tower].draw(button_x[i-1], button_y[i-1], button_size, button_size)
-
-            # 버튼 테두리 그리기 (Rectangle)
-            draw_rectangle(
-                button_x[i - 1] - button_size // 2,
-                button_y[i - 1] - button_size // 2,
-                button_x[i - 1] + button_size // 2,
-                button_y[i - 1] + button_size // 2
-            )
 
             # 가격 표시 (텍스트)
             cost = str(self.tower_info[tower]['cost'])
@@ -343,23 +323,25 @@ class MenuManager:
             upgrade_button[1] - button_size // 2 <= click_y <= upgrade_button[1] + button_size // 2):
             # 업그레이드 처리
             self.upgrade_tower()
+            self.upgrade_sound.play()
             return True
 
         if (sell_button[0] - button_size // 2 <= click_x <= sell_button[0] + button_size // 2 and
             sell_button[1] - button_size // 2 <= click_y <= sell_button[1] + button_size // 2):
             # 판매 처리
             self.sell_tower(stage)
+            self.sell_sound.play()
             return True
 
         return False
 
     def upgrade_tower(self):
         if self.selected_tower and self.selected_tower.upgrade_level < 5:
-            upgrade_cost = self.selected_tower.get_upgrade_cost()  # 업그레이드 비용 예시
-            if self.gold >= upgrade_cost:
-                self.gold -= upgrade_cost
+            upgrade_cost = self.selected_tower.get_upgrade_cost()  # 업그레이드 비용
+            if game_framework.player_gold >= upgrade_cost:
+                game_framework.deduct_gold(upgrade_cost)  # 골드 차감
                 self.selected_tower.upgrade()
-                print(f"Tower upgraded! Remaining gold: {self.gold}")
+                print(f"Tower upgraded! Remaining gold: {game_framework.player_gold}")
             else:
                 print("Not enough gold to upgrade!")
 
@@ -367,8 +349,9 @@ class MenuManager:
         if self.selected_tower:
             sell_value = self.selected_tower.total_cost  # 판매 가격 예시
             refund = (sell_value * 70) // 100
-            self.gold += refund
+            game_framework.add_gold(refund)
             stage.towers.remove(self.selected_tower)
+            game_world.remove_object(self.selected_tower)
             print(f"Tower sold! Gold increased by {sell_value* 70 // 100}.")
             self.hide_menu()
 
@@ -381,10 +364,6 @@ class MenuManager:
                      f"range: {tower.range}\nattack speed: {tower.attack_speed}\n"
                      f"upgrade: {tower.upgrade_level}\nselling price: {tower.total_cost*70//100}\n")
 
-            # Slow 타워인 경우에만 슬로우 속성 추가
-            if tower.tower_type == 'Slow':
-                stats += f"slow: {tower.slow_effect * 100}%\n"  # 슬로우 퍼센트로 출력
-
             stats_lines = stats.split('\n')  # 텍스트를 줄별로 나눔
             stats_x, stats_y = 530, 500
 
@@ -395,15 +374,11 @@ class MenuManager:
         # 업그레이드 버튼
         upgrade_button_x, upgrade_button_y = 560, 150
         tower_icons['Normal'].draw(upgrade_button_x, upgrade_button_y, button_size, button_size)
-        draw_rectangle(upgrade_button_x - button_size // 2, upgrade_button_y - button_size // 2,
-                       upgrade_button_x + button_size // 2, upgrade_button_y + button_size // 2)
         draw_text("Upgrade", upgrade_button_x, upgrade_button_y - 70)
 
         # 판매 버튼
         sell_button_x, sell_button_y = 720, 150
         tower_icons['Sniper'].draw(sell_button_x, sell_button_y, button_size, button_size)
-        draw_rectangle(sell_button_x - button_size // 2, sell_button_y - button_size // 2,
-                       sell_button_x + button_size // 2, sell_button_y + button_size // 2)
         draw_text("Sell", sell_button_x, sell_button_y - 70)
 
 

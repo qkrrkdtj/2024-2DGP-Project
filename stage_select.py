@@ -106,7 +106,6 @@ def draw():
         if i < len(stage_labels):
             draw_text(stage_labels[i], button_x, button_y - button_height // 2 - 10, (255, 255, 255))
 
-        draw_rectangle(button_x - 150, button_y - 75, button_x + 150, button_y + 75)
 
     if is_menu_active:
         draw_menu_overlay()
@@ -126,14 +125,14 @@ def draw_button_image(image, x1, y1, x2, y2):
 def draw_menu_overlay():
 
     draw_button_image(menu_background, 400, 0, 800, 600)
-    draw_rectangle(480, 0, 800, 600)
+
 
     draw_button_image(start_button, 500, 130, 780, 200)
-    draw_rectangle(500, 130, 780, 200)
+
 
     draw_button_image(slide_back, 410, 15, 470, 95)
     draw_button_image(slide, 410, 20, 470, 100)
-    draw_rectangle(410, 20, 470, 100)
+
 
     # 선택된 스테이지 텍스트 표시
     draw_text(f"Stage {selected_stage + 1} Selected", 520, 400, (255, 255, 255))

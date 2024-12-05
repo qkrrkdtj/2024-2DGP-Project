@@ -6,7 +6,6 @@ import game_framework
 import game_world
 import tile
 from bullet import Bullet
-from behavior_tree import BehaviorTree, Action, Sequence, Selector, Condition
 
 # bullet speed
 PIXEL_PER_METER = (10.0 / 0.3)  # 10 pixel 30 cm
@@ -14,8 +13,6 @@ RUN_SPEED_KMPH = 50.0  # Km / Hour
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
 RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
 RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
-
-animation_names = ['Walk', 'Idle']
 
 
 class Tower:
@@ -76,7 +73,8 @@ class Tower:
 
     def draw(self):
         # 타워, 범위, 탄환 그리기
-        self.range_image.draw(self.x, self.y, self.range * 2, self.range * 2)
+        if self.selected:
+            self.range_image.draw(self.x, self.y, self.range * 2, self.range * 2)
         self.under.draw(self.x, self.y, Tower.tower_size, Tower.tower_size)
         self.body.draw(self.x, self.y, Tower.tower_size, Tower.tower_size)
         self.barrel.rotate_draw(math.radians(self.angle), self.x, self.y, Tower.tower_size, Tower.tower_size)
@@ -101,7 +99,6 @@ class Tower:
             bullet = Bullet(self.x, self.y, self.target, self.damage)
             game_world.add_object(bullet, 2)  # 탄환을 월드에 추가
             self.attack_cooldown = max(0.1, self.attack_speed)  # 쿨다운 초기화
-            print("Attack!")  # 공격 출력
             return True
         return False
 
@@ -122,7 +119,6 @@ class Tower:
                 bullet = Bullet(self.x, self.y, target, self.damage)
                 game_world.add_object(bullet, 2)  # 탄환을 게임 월드에 추가
             self.attack_cooldown = max(0.1, self.attack_speed)  # 쿨다운 초기화
-            print(f"Triple Tower attacking {len(targets_to_attack)} enemies!")  # 디버깅 메시지
             return True
 
         return False

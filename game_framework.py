@@ -3,14 +3,15 @@ import time
 from pico2d import load_image
 
 import game_clear_mode
-from game_scene import draw_text
+import game_over_mode
+from game_world import draw_text
 
 # 게임 상태 추가
 GAME_OVER = 1
 GAME_CLEAR = 2
 RUNNING = 3
 player_health = 10
-player_gold = 200
+player_gold = 1000
 boss_spawned = False  # Boss가 소환되었는지 여부를 저장
 
 def change_mode(mode):
@@ -41,7 +42,7 @@ def quit():
     running = False
 
 def run(start_mode):
-    global running, stack
+    global running, stack, player_health, player_gold
     running = True
     stack = [start_mode]
     start_mode.init()
@@ -56,9 +57,11 @@ def run(start_mode):
 
         # 게임 종료 조건 체크 (예: 체력이 0이 되거나 보스를 처치한 경우)
         if check_game_over():
-            change_mode(game_clear_mode)  # 게임 오버 모드로 전환
+            change_mode(game_over_mode)  # 게임 오버 모드로 전환
+
         elif check_game_clear():
-             change_mode(game_clear_mode)  # 게임 클리어 모드로 전환
+            change_mode(game_clear_mode)  # 게임 클리어 모드로 전환
+
 
         stack[-1].draw()
         frame_time = time.time() - current_time
@@ -76,24 +79,22 @@ def check_game_over():
 
 def check_game_clear():
     if not boss_spawned:
-        return False  # Boss가 소환되지 않았다면 클리어 조건 무효
+        return False
     from game_world import get_enemies
-    for enemy in get_enemies():
+    enemies = get_enemies()
+    for enemy in enemies:
         if enemy.type == 'Boss' and enemy.alive:
-            return False  # Boss가 살아있으면 클리어되지 않음
-    print("Round cleared!")
+            return False
     return True
 
 def add_gold(amount):
     global player_gold
     player_gold += amount
-    print(f"Gold updated: {player_gold}")
 
 def deduct_gold(amount):
     global player_gold
     if player_gold >= amount:
         player_gold -= amount
-        print(f"Gold deducted: {player_gold}")
         return True
     else:
         print("Not enough gold!")

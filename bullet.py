@@ -47,4 +47,3 @@ class Bullet:
 
     def draw(self):
         self.image.draw(self.x, self.y, 20, 20)  # 탄환 크기를 20x20으로 설정
-        draw_rectangle(*self.get_bb())  # 디버깅용 충돌 박스
